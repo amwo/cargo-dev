@@ -1,0 +1,7 @@
+[package]
+name = "test_eva"
+version = "0.1.0"
+authors = ["amwo <nuude.ad@gmail.com>"]
+edition = "2018"
+
+[dependencies]
