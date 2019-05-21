@@ -1,13 +1,5 @@
 [package]
 name = "cargo-dev"
 version = "0.1.0"
-authors = ["amwo <nuude.ad@gmail.com>"]
+authors = ["amwo <tsushimori@gmail.com>"]
 edition = "2018"
-
-[dependencies]
-rocket = "0.4.0"
-
-[dependencies.rocket_contrib]
-version = "0.4.0"
-default-features = false
-features = ["serve"]
