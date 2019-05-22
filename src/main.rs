@@ -34,8 +34,8 @@ fn main() {
     println!("{}", p.display());
 
     // TCP Listener
-    let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
-    println!("Listening for connections on port {}", 8080);
+    let listener = TcpListener::bind("127.0.0.1:1111").unwrap();
+    println!("Listening for connections on port {}", 1111);
 
     for stream in listener.incoming() {
         match stream {
