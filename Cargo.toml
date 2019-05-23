@@ -3,3 +3,7 @@ name = "cargo-dev"
 version = "0.1.0"
 authors = ["amwo <tsushimori@gmail.com>"]
 edition = "2018"
+
+[dependencies]
+mime = "0.3.13"
+regex = "1.1.6"
