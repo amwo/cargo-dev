@@ -12,10 +12,10 @@ use std::thread;
 
 fn handle(mut stream: TcpStream) {
     let mut buf = [0u8; 4096];
-    //let re = Regex::new(r"(?<=^GET\s).*?(?=\sHTTP)").unwrap();
     match stream.read(&mut buf) {
         Ok(_) => {
             let req_str = String::from_utf8_lossy(&buf);
+            //extract_ref(req_str);
 
             println!("============================\n{}\n====================================", req_str);
 
@@ -28,6 +28,10 @@ fn handle(mut stream: TcpStream) {
         }
         Err(e) => println!("Unable to read stream: {}", e),
     }
+}
+
+fn extract_ref(header: &str) {
+    let re = Regex::new(r"(?<=^GET\s).*?(?=\sHTTP)").unwrap();
 }
 
 fn body(p: &PathBuf) -> (&str, &str) {
