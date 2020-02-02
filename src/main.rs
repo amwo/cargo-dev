@@ -1,74 +1,52 @@
-extern crate mime;
-extern crate regex;
+extern crate ws;
 
-use mime::Mime;
-use regex::Regex;
+use std::cell::Cell;
+use std::rc::Rc;
 
-use std::env;
-use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
-use std::path::PathBuf;
-use std::thread;
+use ws::{listen, CloseCode, Error, Handler, Handshake, Message, Result, Sender};
 
-fn handle(mut stream: TcpStream) {
-    let mut buf = [0u8; 4096];
-    match stream.read(&mut buf) {
-        Ok(_) => {
-            let req_str = String::from_utf8_lossy(&buf);
-            //extract_ref(req_str);
+struct Server {
+    out: Sender,
+    count: Rc<Cell<u32>>,
+}
 
-            println!("============================\n{}\n====================================", req_str);
-
-            let res = b"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<html><body>Hello</body></html>\r\n";
-
-            match stream.write(res) {
-                Ok(_) => println!("Response sent"),
-                Err(e) => println!("Failed sending res: {}", e),
-            }
-        }
-        Err(e) => println!("Unable to read stream: {}", e),
+impl Handler for Server {
+    fn on_open(&mut self, _: Handshake) -> Result<()> {
+        println!("On Open Exec");
+        Ok(self.count.set(self.count.get() + 1))
     }
-}
 
-fn extract_ref(header: &str) {
-    let re = Regex::new(r"(?<=^GET\s).*?(?=\sHTTP)").unwrap();
-}
+    fn on_message(&mut self, msg: Message) -> Result<()> {
+        println!("The number of live connections is {}", self.count.get());
+        self.out.send(msg)
+    }
 
-fn body(p: &PathBuf) -> (&str, &str) {
-    println!("{:?}", p);
-    ("", "")
-}
+    fn on_close(&mut self, code: CloseCode, reason: &str) {
+        match code {
+            CloseCode::Normal => println!("The client is done with the connection."),
+            CloseCode::Away => println!("The client is leaving the site."),
+            CloseCode::Abnormal => {
+                println!("Closing handshake failed! Unable to obtain closing status from client.")
+            }
+            _ => println!("The client encountered an error: {}", reason),
+        }
 
-fn find_mimetype(filename: &String) -> Mime {
-    let parts: Vec<&str> = filename.split('.').collect();
+        self.count.set(self.count.get() - 1)
+    }
 
-    let res = match parts.last() {
-        Some(v) => match *v {
-            "png" => mime::IMAGE_PNG,
-            "jpg" => mime::IMAGE_JPEG,
-            "json" => mime::APPLICATION_JSON,
-            &_ => mime::TEXT_PLAIN,
-        },
-        None => mime::TEXT_PLAIN,
-    };
-    return res;
+    fn on_error(&mut self, err: Error) {
+        println!("The server encountered an error: {:?}", err);
+    }
 }
 
 fn main() {
-    let p = env::current_dir().unwrap();
-    println!("{}", p.display());
+    let count = Rc::new(Cell::new(0));
 
-    let listener = TcpListener::bind("127.0.0.1:1111").unwrap();
-    println!("Listening for connections on port {}", 1111);
+    println!("Post::3012 Listening ...");
 
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                thread::spawn(|| handle(stream));
-            }
-            Err(e) => {
-                println!("Unable to connect: {}", e);
-            }
-        }
-    }
+    listen("127.0.0.1:3012", |out| Server {
+        out,
+        count: count.clone(),
+    })
+    .unwrap();
 }
